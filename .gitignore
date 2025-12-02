@@ -1,0 +1,17 @@
+# macOS system files
+__MACOSX/
+.DS_Store
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Dataset – do NOT upload
+cornell movie-dialogs corpus/
+*.pdf
+raw_script_urls.txt
+chameleons.pdf
+
+# You may keep the README inside the main project,
+# but ignore the README inside corpus
+cornell movie-dialogs corpus/README.txt
