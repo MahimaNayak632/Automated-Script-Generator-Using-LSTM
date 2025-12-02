@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automated Script Generator using LSTM</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .input-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+        }
+
+        .output-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .characters-input {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .script-output {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 300px;
+            max-height: 500px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #e74c3c;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .success {
+            background: #2ecc71;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-left: 4px solid #3498db;
+        }
+
+        .feature-card h4 {
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .feature-card p {
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Automated Script Generator</h1>
+            <p>Using LSTM Neural Networks for Creative Script Writing</p>
+        </div>
+
+        <div class="content">
+            <div class="input-section">
+                <div class="error" id="errorMessage"></div>
+                <div class="success" id="successMessage"></div>
+
+                <div class="form-group">
+                    <label for="genre">Select Genre:</label>
+                    <select id="genre">
+                        <option value="comedy">Comedy</option>
+                        <option value="drama">Drama</option>
+                        <option value="thriller">Thriller</option>
+                        <option value="romance">Romance</option>
+                        <option value="action">Action</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Characters (2-4 characters):</label>
+                    <div class="characters-input">
+                        <input type="text" id="char1" placeholder="Character 1" value="ROSS">
+                        <input type="text" id="char2" placeholder="Character 2" value="RACHEL">
+                        <input type="text" id="char3" placeholder="Character 3 (optional)" value="JOEY">
+                        <input type="text" id="char4" placeholder="Character 4 (optional)" value="MONICA">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="maxLength">Script Length:</label>
+                    <input type="range" id="maxLength" min="50" max="500" value="150">
+                    <span id="lengthValue">150 words</span>
+                </div>
+
+                <button class="btn" id="generateBtn" onclick="generateScript()">
+                    Generate Script
+                </button>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Generating your script... This may take a few seconds.</p>
+                </div>
+
+                <div class="features">
+                    <div class="feature-card">
+                        <h4>Genre Adaptation</h4>
+                        <p>Adapts to comedy, drama, thriller styles</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>Character Consistency</h4>
+                        <p>Maintains unique speaking styles</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>LSTM Powered</h4>
+                        <p>Advanced neural network technology</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="output-section">
+                <h3>Generated Script</h3>
+                <div class="script-output" id="scriptOutput">
+                    Your generated script will appear here...
+                </div>
+                <button class="btn" onclick="copyScript()" style="margin-top: 15px;">
+                    Copy to Clipboard
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Update length value display
+        document.getElementById('maxLength').addEventListener('input', function() {
+            document.getElementById('lengthValue').textContent = this.value + ' words';
+        });
+
+        function showMessage(elementId, message) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.style.display = 'block';
+            setTimeout(() => {
+                element.style.display = 'none';
+            }, 5000);
+        }
+
+        async function generateScript() {
+            const generateBtn = document.getElementById('generateBtn');
+            const loading = document.getElementById('loading');
+            const scriptOutput = document.getElementById('scriptOutput');
+
+            // Get input values
+            const genre = document.getElementById('genre').value;
+            const maxLength = document.getElementById('maxLength').value;
+            
+            // Get characters (filter out empty values)
+            const characters = [
+                document.getElementById('char1').value,
+                document.getElementById('char2').value,
+                document.getElementById('char3').value,
+                document.getElementById('char4').value
+            ].filter(char => char.trim() !== '');
+
+            if (characters.length < 2) {
+                showMessage('errorMessage', 'Please enter at least 2 characters');
+                return;
+            }
+
+            // Show loading state
+            generateBtn.disabled = true;
+            loading.style.display = 'block';
+            scriptOutput.textContent = 'Generating script...';
+
+            try {
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        characters: characters,
+                        genre: genre,
+                        max_length: parseInt(maxLength)
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    scriptOutput.textContent = data.script;
+                    showMessage('successMessage', 'Script generated successfully!');
+                } else {
+                    scriptOutput.textContent = 'Error generating script. Please try again.';
+                    showMessage('errorMessage', data.error || 'An error occurred');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                scriptOutput.textContent = 'Error connecting to server. Please try again.';
+                showMessage('errorMessage', 'Connection error. Please check if the server is running.');
+            } finally {
+                generateBtn.disabled = false;
+                loading.style.display = 'none';
+            }
+        }
+
+        function copyScript() {
+            const scriptOutput = document.getElementById('scriptOutput');
+            const textArea = document.createElement('textarea');
+            textArea.value = scriptOutput.textContent;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            showMessage('successMessage', 'Script copied to clipboard!');
+        }
+
+        // Initialize with a sample generation
+        window.addEventListener('load', function() {
+            // Check server health
+            fetch('/health')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.model_loaded) {
+                        showMessage('successMessage', 'System ready! Enter your parameters and generate a script.');
+                    } else {
+                        showMessage('errorMessage', 'Model is still loading. Please wait...');
+                    }
+                })
+                .catch(error => {
+                    showMessage('errorMessage', 'Cannot connect to server. Please make sure the backend is running.');
+                });
+        });
+    </script>
+</body>
+</html> 
+ 
+
+
+
+
+
+
+
+
+
